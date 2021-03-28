@@ -17,39 +17,37 @@ function handelLocationRequest(req,res){
   const locationsRawData = require('./data/location.json');
   const location = new LocationCity(locationsRawData[0],searchQuery);
   res.send(location);
-//   console.log(location,searchQuery);
+  console.log(location);
 }
 
 function handelWeatherRequest(req,res){
   const weatherArray=[];
-//   const searchQuery = req.query.city;
+  // const searchQuery = req.query.city;
   const weatherRawData = require('./data/weather.json');
   weatherRawData.data.forEach(element => {
-    // const weatherDescription=element.weather.description;
-    // const dateTime=element.datetime;
-    let weatherData= new WeatherCity(element);
+    const weatherDescription=element.weather.description;
+    const dateTime=element.datetime;
+    let weatherData= new WeatherCity(weatherDescription,dateTime);
     // res.send(weatherData);
     weatherArray.push(weatherData);
   });
   res.send(weatherArray);
 
-//   console.log(weatherArray);
+  console.log(weatherArray);
 }
 
 //constructor
 function LocationCity (data,searchQuery){
   this.formatted_query = data.display_name;
   this.searchQuery= searchQuery;
-  this.city=data.city;
   this.latitude = data.lat;
   this.longitude = data.lon;
 
 }
-function WeatherCity(data,searchQuery){
-  this.forcaste=data.weather.description;
-  this.time=data.datetime;
-//   this.searchQuery=searchQuery;
-//   console.log(this);
+function WeatherCity(weatherDescription,dateTime){
+  this.forcaste=weatherDescription;
+  this.time=dateTime;
+  // console.log(this);
 
 }
 app.use('*', (req, res) => {
