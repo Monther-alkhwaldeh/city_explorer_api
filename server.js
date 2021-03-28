@@ -23,19 +23,21 @@ function handelLocationRequest(req,res){
 
 function handelWeatherRequest(req,res){
   const weatherArray=[];
-//   const searchQuery = req.query.city;
+  const searchQuery = req.query.city;
   const weatherRawData = require('./data/weather.json');
   weatherRawData.data.forEach(element => {
     const weatherDescription=element.weather.description;
     const dateTime=element.datetime;
-    let weatherData= new WeatherCity(weatherDescription,dateTime);
+    let weatherData= new WeatherCity(element,searchQuery);
     // res.send(weatherData);
     weatherArray.push(weatherData);
   });
+  res.send(weatherArray);
+
 //   console.log(weatherArray);
 }
+
 //constructor
-handelWeatherRequest();
 function LocationCity (data,searchQuery){
   this.formatted_query = data.display_name;
   this.searchQuery= searchQuery;
@@ -43,11 +45,13 @@ function LocationCity (data,searchQuery){
   this.longitude = data.lon;
 
 }
-function WeatherCity(weatherDescription,dateTime){
-  this.forcaste=weatherDescription;
-  this.time=dateTime;
-}
+function WeatherCity(data,searchQuery){
+  this.forcaste=data.weather.description;
+  this.time=data.datetime;
+//   this.searchQuery=searchQuery;
+  console.log(this);
 
+}
 app.use('*', (req, res) => {
   res.send('all good nothing to see here!');
 });
