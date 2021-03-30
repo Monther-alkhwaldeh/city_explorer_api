@@ -15,7 +15,7 @@ app.use(cors());
 
 app.get('/location', handelLocationRequest);
 app.get('/weather', handelWeatherRequest);
-app.get('/parks', handelParkesRequest);
+app.get('/parks', handelParksRequest);
 
 app.use('*', notFoundHandler);
 
@@ -37,31 +37,12 @@ function handelLocationRequest(req, res) {
   });
 
 }
-// const locationsRawData = require('./data/location.json');
-// const location = new LocationCity(locationsRawData[0],search_uery);
-// res.send(location);
-// console.log(location);
-// }
 
-// function handelWeatherRequest(req, res) {
-//   const city_search_query = req.query.city;
-//   const url =`http://api.weatherbit.io/v2.0/forecast/daily?city=${city_search_query}$key=${WEATHER_API_KEY}`;
-
-//   superagent.get(url).then(resData => {
-
-//     const weatherData = new WeatherCity(resData.body.data);
-//     res.status(200).send(weatherData);
-//   }).catch((error) => {
-//     console.log('ERROR', error);
-//     res.status(500).send('Sorry, something went wrong');
-//   });
-
-// }
 function handelWeatherRequest(req, res) {
-  // const searchQuery1 = req.query.lat;
-  // const searchQuery2 = req.query.lon;
-  const searchQueryCity = req.query.city;
-  const url = `https://api.weatherbit.io/v2.0/forecast/daily?city=${searchQueryCity}&key=${WEATHER_CODE_API_KEY}`;
+  const searchQuery1 = req.query.lat;
+  const searchQuery2 = req.query.lon;
+  // const searchQueryCity = req.query.city;
+  const url =`https://api.weatherbit.io/v2.0/forecast/daily?lat=${searchQuery1}&lon=${searchQuery2}&key=${WEATHER_CODE_API_KEY}&include=minutely`;
   superagent.get(url).then(resData => {
     let weatherArray=[];
     const weatherMap=resData.body.data.map((element)=>{
@@ -76,42 +57,30 @@ function handelWeatherRequest(req, res) {
     res.status(500).send('Sorry, something went wrong');
   });
 }
-// const weatherArray=[];
-// const weatherRawData = require('./data/weather.json');
-// weatherRawData.data.forEach(element => {
-//   const weatherDescription=element.weather.description;
-//   const dateTime=element.datetime;
-//   let weatherData= new WeatherCity(weatherDescription,dateTime);
-//   weatherArray.push(weatherData);
-// });
-// res.send(weatherArray);
 
-// console.log(weatherArray);
-
-function handelParkesRequest(req,res){
-  const search_query_city=req.query.city;
-  // const url=`https://developer.nps.gov/api/v1/activities/parks?q=${search_query_city}&api_key=${PARKS_CODE_API_KEY}`;
-  const url=`https://developer.nps.gov/api/v1/parks?city=${search_query_city}&api_key=${PARKS_CODE_API_KEY}`;
+function handelParksRequest(req, res) {
+  const searchQuery = req.query.city;
+  const url = `https://developer.nps.gov/api/v1/parks?city=${searchQuery}&api_key=${PARKS_CODE_API_KEY}`;
   superagent.get(url).then(resData => {
-    let arrayParks=[];
-    console.log(arrayParks);
-    const parksMap= resData.body.data.map(element=>{
-      const fullName=element.fullName;
-      const url1=element.url;
-      const description=element.description;
-      const fees=element.entranceFees.cost;
-      const address=`${element.addresses.postalCode}, ${element.addresses.city} , ${element.addresses.postalCode} , ${element.addresses.stateCode} , ${element.addresses.line1}`;
-      const parkData= new Parks(fullName,address,fees,description,url1);
-      arrayParks.push(parkData);
-
+    const tenParks = resData.body.data.map((element) => {
+      return new Park(element);
     });
-    res.status(200).send(arrayParks);
+    res.status(200).send(tenParks.slice(0, 10));
   }).catch((error) => {
     res.status(500).send('Sorry, something went wrong');
   });
-  // });
 }
+
+
 //constructor
+
+function Park(parkData) {
+  this.name = parkData.fullName;
+  this.address = parkData.addresses[0].postalCode + ' ' + parkData.addresses[0].line1 + ' ' + parkData.addresses[0].city + ' ' + parkData.addresses[0].stateCode;
+  this.fee = '0';
+  this.description = parkData.description;
+  this.url = parkData.url;
+}
 function LocationCity(data, searchQuery) {
   this.search_query = searchQuery;
   this.formatted_query = data.display_name;
@@ -119,31 +88,16 @@ function LocationCity(data, searchQuery) {
   this.longitude = data.lon;
 
 }
-// function WeatherCity(weatherDescription) {
-//   this.forecast = weatherDescription[0].weather.description;
-//   this.time = weatherDescription[0].datetime;
 
-// }
 function WeatherCity(weatherDescription,dateTime){
   this.forecast=weatherDescription;
   this.time=dateTime;
-
-}
-
-function Parks(name,address,fee,description,url){
-  this.name=name;
-  this.address=address;
-  this.fee=fee;
-  this.description=description;
-  this.url=url;
 }
 
 function notFoundHandler(request, response) {
   response.status(404).send('Handle Not Found?');
 }
-// function handelParkesRequest() {
 
-// }
 app.use('*', (req, res) => {
   res.send('all good nothing to see here!');
 });
