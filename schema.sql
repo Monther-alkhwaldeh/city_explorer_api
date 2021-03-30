@@ -1,6 +1,6 @@
 
 CREATE TABLE IF NOT EXISTS
-City(
+citydb(
   id SERIAL PRIMARY KEY NOT NULL,
   search_query VARCHAR(256) NOT NULL,
   formatted_query VARCHAR(256) NOT NULL,
