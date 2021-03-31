@@ -11,6 +11,8 @@ const GEO_CODE_API_KEY = process.env.GEO_CODE_API_KEY;
 const WEATHER_CODE_API_KEY = process.env.WEATHER_API_KEY;
 const PARKS_CODE_API_KEY = process.env.PARKS_API_KEY;
 const DATABASE_URL = process.env.DATABASE_URL;
+const MOVIES_API_KEY =process.env.MOVIES_API_KEY;
+const YELP_API_KEY=process.env.YELP_API_KEY;
 
 
 const app = express();
@@ -20,6 +22,10 @@ const client=new pg.Client(DATABASE_URL);
 app.get('/location', handelLocationRequest);
 app.get('/weather', handelWeatherRequest);
 app.get('/parks', handelParksRequest);
+app.get('/movies', handelMoviesRequest);
+app.get('/yelp', handelYelpRequest);
+
+
 
 app.get('/', (request, response) => {
   response.status(200).send('ok');
@@ -63,7 +69,7 @@ function handelLocationRequest(req, res) {
       });
     }
   });
- 
+
 }
 
 function handelWeatherRequest(req, res) {
@@ -97,9 +103,67 @@ function handelParksRequest(req, res) {
     res.status(500).send('Sorry, something went wrong');
   });
 }
+function handelYelpRequest(req,res){
+  //https://www.yelp.com/developers/documentation/v3/business_search
+  const search_query=req.query.location;
 
+  const url=`https://api.yelp.com/v3/businesses/search`;
+  const yelp_query={
+    location : search_query
+  };
+  superagent.get(url).query(yelp_query).set('Authorization',`Bearer ${YELP_API_KEY}`).then(resData=>{
+    const yelpArray=[];
+    const yelp_list=resData.body.businesses.map(element=>{
+      const name=element.name;
+      console.log(name);
+      const image_url=element.image_url;
+      const price=element.price;
+      const rating=element.rating;
+      const url=element.url;
+      const yelpL=new Yelp(name,image_url,price,rating,url);
+      yelpArray.push(yelpL);
+    });
+    res.status(200).send(yelpArray);
+  }).catch((error) => {
+    res.status(500).send('Sorry, something went wrong');
+  });
+}
+
+function handelMoviesRequest(req, res){
+  const search_query=req.query.query;
+  const url=`https://api.themoviedb.org/3/search/movie`;
+  const movie_query={
+    api_key:MOVIES_API_KEY,
+    query: search_query
+  };
+  superagent.get(url).query(movie_query).then(resData=>{
+
+    const movieListArray=[];
+    const movieList=resData.body.results.map((element)=>{
+      const title=element.title;
+      const overview=element.overview;
+      const average_votes=element.vote_average;
+      const total_votes=element.vote_count;
+      const image_url=element.poster_path;
+      const popularity=element.popularity;
+      const released_on=element.released_on;
+      const movieList= new Movies(title,overview,average_votes,total_votes,image_url,popularity,released_on);
+      movieListArray.push(movieList);
+    });
+    res.status(200).send(movieListArray);
+  }).catch((error) => {
+    res.status(500).send('Sorry, something went wrong');
+  });
+}
 
 //constructor
+function Yelp(name,image_url,price,rating,url){
+  this.name=name;
+  this.image_url=image_url;
+  this.price=price;
+  this.rating=rating;
+  this.url=url;
+}
 
 function Park(parkData) {
   this.name = parkData.fullName;
@@ -121,9 +185,19 @@ function WeatherCity(weatherDescription,dateTime){
   this.time=dateTime;
 }
 
+function Movies (title,overview,average_votes,total_votes,image_url,popularity,released_on){
+  this.title=title;
+  this.overview=overview;
+  this.average_votes=average_votes;
+  this.total_votes=total_votes;
+  this.image_url=image_url;
+  this.popularity=popularity;
+  this.released_on=released_on;
+}
 function notFoundHandler(request, response) {
   response.status(404).send('Handle Not Found?');
 }
+
 
 app.use('*', (req, res) => {
   res.send('all good nothing to see here!');
